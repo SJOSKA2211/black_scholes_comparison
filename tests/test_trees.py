@@ -3,7 +3,7 @@ Test cases for Binomial and Trinomial Tree Methods
 """
 import pytest
 from src.options.base import Option
-from src.numerical.trees import BinomialTree, TrinomialTree
+from src.numerical.trees import BinomialTree
 from src.analytical.black_scholes import BlackScholes
 
 # Test data for European Call and Put options
