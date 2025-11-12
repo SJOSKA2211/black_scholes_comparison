@@ -12,9 +12,7 @@ class BlackScholes:
     @staticmethod
     def d1(option: Option) -> float:
         """Calculate d1 parameter"""
-        return (np.log(option.S / option.K) + 
-                (option.r + 0.5 * option.sigma**2) * option.T) / 
-               (option.sigma * np.sqrt(option.T))
+        return (np.log(option.S / option.K) + (option.r + 0.5 * option.sigma**2) * option.T) / (option.sigma * np.sqrt(option.T))
     
     @staticmethod
     def d2(option: Option) -> float:

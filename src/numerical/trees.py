@@ -126,20 +126,20 @@ class TrinomialTree:
         self.n_steps = n_steps
         self.dt = option.T / n_steps
         
-        # Calculate parameters
-        self.u = np.exp(option.sigma * np.sqrt(2 * self.dt))
-        self.d = 1 / self.u
-        self.m = 1.0
+        # Calculate parameters (consistent Hull's model)
+        dx = option.sigma * np.sqrt(3 * self.dt) # Consistent dx for u, d and probabilities
+        self.u = np.exp(dx)
+        self.d = np.exp(-dx)
+        self.m = 1.0 # Middle step is 1.0
         
-        # Risk-neutral probabilities
-        dx = option.sigma * np.sqrt(self.dt)
+        # Risk-neutral probabilities (consistent Hull's model)
         nu = option.r - 0.5 * option.sigma**2
         
-        self.pu = 0.5 * ((option.sigma**2 * self.dt + nu**2 * self.dt**2) / dx**2 + 
-                         nu * self.dt / dx)
-        self.pd = 0.5 * ((option.sigma**2 * self.dt + nu**2 * self.dt**2) / dx**2 - 
-                         nu * self.dt / dx)
+        self.pu = 0.5 * ((nu * self.dt / dx) + (nu * self.dt / dx)**2 + option.sigma**2 * self.dt / dx**2)
+        self.pd = 0.5 * (-(nu * self.dt / dx) + (nu * self.dt / dx)**2 + option.sigma**2 * self.dt / dx**2)
         self.pm = 1 - self.pu - self.pd
+        
+        print(f"TrinomialTree: pu={self.pu}, pd={self.pd}, pm={self.pm}, sum={self.pu+self.pd+self.pm}")
     
     def european(self) -> Tuple[float, float]:
         """
@@ -155,8 +155,11 @@ class TrinomialTree:
         start_time = time.time()
         
         # Initialize asset prices at maturity
-        ST = np.array([self.option.S * (self.u ** j) * (self.d ** (self.n_steps - j))
-                       for j in range(-self.n_steps, self.n_steps + 1)])
+        # In a trinomial tree, the number of nodes at maturity is 2*n_steps + 1
+        # The index j goes from 0 to 2*n_steps
+        # The price at node j at maturity n_steps is S * d^(n_steps - j) * u^j
+        ST = np.array([self.option.S * (self.d ** (self.n_steps - j)) * (self.u ** j)
+                       for j in range(2 * self.n_steps + 1)])
         
         # Calculate payoffs at maturity
         if self.option.option_type == 'call':

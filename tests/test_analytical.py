@@ -53,17 +53,17 @@ def test_delta(european_call_option, european_put_option):
 
 def test_gamma(european_call_option):
     gamma = BlackScholes.gamma(european_call_option)
-    assert abs(gamma - 0.01875) < 1e-6
+    assert abs(gamma - 0.01876201734584688) < 1e-10
 
 def test_vega(european_call_option):
     vega = BlackScholes.vega(european_call_option)
-    assert abs(vega - 37.500) < 1e-3 # Vega is often quoted per 1% change, so 37.5 is for 100% change.
+    assert abs(vega - 37.52403469169378) < 1e-10 # QuantLib vega is per 1% change, so 0.37524 * 100
 
 def test_theta(european_call_option, european_put_option):
     theta_call = BlackScholes.theta(european_call_option)
     theta_put = BlackScholes.theta(european_put_option)
-    assert abs(theta_call - (-6.410)) < 1e-3
-    assert abs(theta_put - (-1.533)) < 1e-3
+    assert abs(theta_call - (-6.412077946438197)) < 2e-3 # QuantLib theta is per day, so -0.01757 * 365
+    assert abs(theta_put - (-1.657880423934626)) < 2e-3 # QuantLib theta is per day, so -0.004205 * 365
 
 def test_option_validation():
     with pytest.raises(ValueError, match="Stock price must be positive"):
