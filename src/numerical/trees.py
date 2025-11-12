@@ -1,6 +1,6 @@
 """
-Binomial and Trinomial Tree Methods
-Implements CRR binomial trees and trinomial trees
+Binomial Tree Methods
+Implements CRR binomial trees
 """
 import numpy as np
 from typing import Tuple

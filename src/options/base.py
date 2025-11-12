@@ -35,4 +35,4 @@ class Option:
     
     def __repr__(self) -> str:
         return (f"Option(S={self.S}, K={self.K}, T={self.T}, "
-                f"r={self.r}, sigma={self.sigma}, type={self.option_type})")
+                f"r={self.r}, sigma={self.sigma}, dividend_yield={self.dividend_yield}, type={self.option_type})")
