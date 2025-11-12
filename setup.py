@@ -11,12 +11,12 @@ setup(
         # for proper package distribution.
     ],
     python_requires='>=3.10',
-    author='Your Name',
-    author_email='your.email@example.com',
+    author='Joseph Kamau Maina',
+    author_email='sjoska2211@ueab.ac.ke',
     description='A comparative analysis of numerical methods for Black-Scholes PDE',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='https://github.com/yourusername/black_scholes_comparison',
+    url='https://github.com/SJOSKA2211/black_scholes_comparison',
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
