@@ -15,7 +15,7 @@ ql.Settings.instance().evaluationDate = calculation_date
 # Set up option
 maturity_date = calculation_date + ql.Period(int(T * 365), ql.Days)
 exercise = ql.EuropeanExercise(maturity_date)
-payoff = ql.PlainVanillaPayoff(ql.Option.Put, K)
+payoff = ql.PlainVanillaPayoff(ql.Option.Call, K)
 option = ql.VanillaOption(payoff, exercise)
 
 # Set up Black-Scholes process
@@ -35,9 +35,12 @@ delta = option.delta()
 gamma = option.gamma()
 vega = option.vega() / 100.0 # QuantLib vega is per 1% change in volatility
 theta = option.theta() / 365.0 # QuantLib theta is per day
+rho = option.rho() # QuantLib rho is per 1% change in interest rate, so no need to divide by 100.0 here.
+
 
 print(f"Price: {price}")
 print(f"Delta: {delta}")
 print(f"Gamma: {gamma}")
 print(f"Vega: {vega}")
 print(f"Theta: {theta}")
+print(f"Rho: {rho}")

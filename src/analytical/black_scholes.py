@@ -41,12 +41,23 @@ class BlackScholes:
         return price
     
     @staticmethod
-    def price(option: Option) -> float:
-        """Calculate option price based on type"""
-        if option.option_type == 'call':
-            return BlackScholes.call_price(option)
-        else:
-            return BlackScholes.put_price(option)
+    def price(option: Option) -> dict:
+        """Calculate option price and Greeks based on type"""
+        price_val = BlackScholes.call_price(option) if option.option_type == 'call' else BlackScholes.put_price(option)
+        delta_val = BlackScholes.delta(option)
+        gamma_val = BlackScholes.gamma(option)
+        vega_val = BlackScholes.vega(option)
+        theta_val = BlackScholes.theta(option)
+        rho_val = BlackScholes.rho(option)
+        
+        return {
+            "price": price_val,
+            "delta": delta_val,
+            "gamma": gamma_val,
+            "vega": vega_val,
+            "theta": theta_val,
+            "rho": rho_val
+        }
     
     @staticmethod
     def delta(option: Option) -> float:
@@ -83,3 +94,12 @@ class BlackScholes:
         else:
             term2 = option.r * option.K * np.exp(-option.r * option.T) * norm.cdf(-d2_val)
             return term1 + term2
+    
+    @staticmethod
+    def rho(option: Option) -> float:
+        """Calculate option rho"""
+        d2_val = BlackScholes.d2(option)
+        if option.option_type == 'call':
+            return option.K * option.T * np.exp(-option.r * option.T) * norm.cdf(d2_val)
+        else:
+            return -option.K * option.T * np.exp(-option.r * option.T) * norm.cdf(-d2_val)

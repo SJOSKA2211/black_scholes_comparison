@@ -14,6 +14,7 @@ class Option:
     T: float  # Time to maturity (years)
     r: float  # Risk-free rate
     sigma: float  # Volatility
+    dividend_yield: float = 0.0 # Dividend yield
     option_type: Literal['call', 'put'] = 'call'
     
     def __post_init__(self):
