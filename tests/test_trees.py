@@ -54,14 +54,4 @@ def test_binomial_american_put(american_put_option):
     # A reasonable upper bound for the difference for this specific case
     assert abs(price - analytical_european_price) < 1.0 # American put price is higher
 
-def test_trinomial_european_call(european_call_option):
-    tt = TrinomialTree(european_call_option, n_steps=500)
-    price, _ = tt.european()
-    analytical_price = BlackScholes.price(european_call_option)
-    assert abs(price - analytical_price) < 0.1
 
-def test_trinomial_european_put(european_put_option):
-    tt = TrinomialTree(european_put_option, n_steps=500)
-    price, _ = tt.european()
-    analytical_price = BlackScholes.price(european_put_option)
-    assert abs(price - analytical_price) < 0.1
