@@ -100,7 +100,11 @@ class MonteCarlo:
                     np.sqrt(self.n_paths)
         
         elapsed_time = time.time() - start_time
-        return price, std_error, elapsed_time
+        return {
+            "price": price,
+            "std_error": std_error,
+            "computation_time": elapsed_time
+        }
     
     def antithetic_variates(self) -> Tuple[float, float, float]:
         """
@@ -133,7 +137,11 @@ class MonteCarlo:
                     np.sqrt(self.n_paths)
         
         elapsed_time = time.time() - start_time
-        return price, std_error, elapsed_time
+        return {
+            "price": price,
+            "std_error": std_error,
+            "computation_time": elapsed_time
+        }
     
     def control_variates(self, control_price: float) -> Tuple[float, float, float]:
         """
@@ -183,4 +191,8 @@ class MonteCarlo:
         std_error = np.std(adjusted_payoffs) / np.sqrt(self.n_paths)
         
         elapsed_time = time.time() - start_time
-        return price, std_error, elapsed_time
+        return {
+            "price": price,
+            "std_error": std_error,
+            "computation_time": elapsed_time
+        }

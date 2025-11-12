@@ -96,7 +96,10 @@ class FiniteDifference:
         price = np.interp(self.option.S, self.price_grid, self.V[:, 0])
         
         elapsed_time = time.time() - start_time
-        return price, elapsed_time
+        return {
+            "price": price,
+            "computation_time": elapsed_time
+        }
     
     def implicit(self) -> Tuple[float, float]:
         """
@@ -141,7 +144,10 @@ class FiniteDifference:
         price = np.interp(self.option.S, self.price_grid, self.V[:, 0])
         
         elapsed_time = time.time() - start_time
-        return price, elapsed_time
+        return {
+            "price": price,
+            "computation_time": elapsed_time
+        }
     
     def crank_nicolson(self) -> Tuple[float, float]:
         """
@@ -187,4 +193,7 @@ class FiniteDifference:
         price = np.interp(self.option.S, self.price_grid, self.V[:, 0])
         
         elapsed_time = time.time() - start_time
-        return price, elapsed_time
+        return {
+            "price": price,
+            "computation_time": elapsed_time
+        }
