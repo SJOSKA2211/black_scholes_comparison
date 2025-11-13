@@ -27,13 +27,13 @@ def american_put_option():
 def test_binomial_european_call(european_call_option):
     bt = BinomialTree(european_call_option, n_steps=500)
     price, _ = bt.european()
-    analytical_price = BlackScholes.price(european_call_option)
+    analytical_price = BlackScholes.price(european_call_option)["price"]
     assert abs(price - analytical_price) < 0.1
 
 def test_binomial_european_put(european_put_option):
     bt = BinomialTree(european_put_option, n_steps=500)
     price, _ = bt.european()
-    analytical_price = BlackScholes.price(european_put_option)
+    analytical_price = BlackScholes.price(european_put_option)["price"]
     assert abs(price - analytical_price) < 0.1
 
 def test_binomial_american_call(american_call_option):
@@ -41,7 +41,7 @@ def test_binomial_american_call(american_call_option):
     # So, American call price should be very close to European call price.
     bt = BinomialTree(american_call_option, n_steps=500)
     price, _ = bt.american()
-    analytical_european_price = BlackScholes.price(american_call_option)
+    analytical_european_price = BlackScholes.price(american_call_option)["price"]
     assert abs(price - analytical_european_price) < 0.1
 
 def test_binomial_american_put(american_put_option):
@@ -49,7 +49,37 @@ def test_binomial_american_put(american_put_option):
     # The price should be greater than or equal to the European put price.
     bt = BinomialTree(american_put_option, n_steps=500)
     price, _ = bt.american()
-    analytical_european_price = BlackScholes.price(american_put_option)
+    analytical_european_price = BlackScholes.price(american_put_option)["price"]
+    assert price >= analytical_european_price
+    # A reasonable upper bound for the difference for this specific case
+    assert abs(price - analytical_european_price) < 1.0 # American put price is higher
+
+def test_jarrow_rudd_european_call(european_call_option):
+    bt = BinomialTree(european_call_option, n_steps=500)
+    price, _ = bt.jarrow_rudd_european()
+    analytical_price = BlackScholes.price(european_call_option)["price"]
+    assert abs(price - analytical_price) < 0.1
+
+def test_jarrow_rudd_european_put(european_put_option):
+    bt = BinomialTree(european_put_option, n_steps=500)
+    price, _ = bt.jarrow_rudd_european()
+    analytical_price = BlackScholes.price(european_put_option)["price"]
+    assert abs(price - analytical_price) < 0.1
+
+def test_jarrow_rudd_american_call(american_call_option):
+    # For American calls on non-dividend paying stocks, early exercise is never optimal.
+    # So, American call price should be very close to European call price.
+    bt = BinomialTree(american_call_option, n_steps=500)
+    price, _ = bt.jarrow_rudd_american()
+    analytical_european_price = BlackScholes.price(american_call_option)["price"]
+    assert abs(price - analytical_european_price) < 0.1
+
+def test_jarrow_rudd_american_put(american_put_option):
+    # American puts can have early exercise value.
+    # The price should be greater than or equal to the European put price.
+    bt = BinomialTree(american_put_option, n_steps=500)
+    price, _ = bt.jarrow_rudd_american()
+    analytical_european_price = BlackScholes.price(american_put_option)["price"]
     assert price >= analytical_european_price
     # A reasonable upper bound for the difference for this specific case
     assert abs(price - analytical_european_price) < 1.0 # American put price is higher

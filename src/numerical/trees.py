@@ -3,7 +3,7 @@ Binomial Tree Methods
 Implements CRR binomial trees
 """
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Dict # Added Dict
 from ..options.base import Option
 import time
 
@@ -103,6 +103,101 @@ class BinomialTree:
             # Take maximum (early exercise decision)
             V = np.maximum(continuation, intrinsic)
         
+        price = V[0]
+        elapsed_time = time.time() - start_time
+        return price, elapsed_time
+    
+        price = V[0]
+        elapsed_time = time.time() - start_time
+        return price, elapsed_time
+    
+    def jarrow_rudd_european(self) -> Tuple[float, float]:
+        """
+        Price European option using Jarrow-Rudd binomial tree
+        
+        Returns:
+        --------
+        price : float
+            Option price
+        time : float
+            Computation time
+        """
+        start_time = time.time()
+        
+        # Jarrow-Rudd parameters
+        jr_u = np.exp((self.option.r - 0.5 * self.option.sigma**2) * self.dt + self.option.sigma * np.sqrt(self.dt))
+        jr_d = np.exp((self.option.r - 0.5 * self.option.sigma**2) * self.dt - self.option.sigma * np.sqrt(self.dt))
+        jr_p = 0.5
+        
+        # Initialize asset prices at maturity
+        ST = np.array([self.option.S * (jr_u ** j) * (jr_d ** (self.n_steps - j))
+                       for j in range(self.n_steps + 1)])
+        
+        # Calculate payoffs at maturity
+        if self.option.option_type == 'call':
+            V = np.maximum(ST - self.option.K, 0)
+        else:
+            V = np.maximum(self.option.K - ST, 0)
+        
+        # Backward induction
+        for i in range(self.n_steps - 1, -1, -1):
+            V = np.exp(-self.option.r * self.dt) * (jr_p * V[1:] + (1 - jr_p) * V[:-1])
+        
+        price = V[0]
+        elapsed_time = time.time() - start_time
+        return price, elapsed_time
+    
+    def jarrow_rudd_american(self) -> Tuple[float, float]:
+        """
+        Price American option using Jarrow-Rudd binomial tree with early exercise
+        
+        Returns:
+        --------
+        price : float
+            Option price
+        time : float
+            Computation time
+        """
+        start_time = time.time()
+        
+        # Jarrow-Rudd parameters
+        jr_u = np.exp((self.option.r - 0.5 * self.option.sigma**2) * self.dt + self.option.sigma * np.sqrt(self.dt))
+        jr_d = np.exp((self.option.r - 0.5 * self.option.sigma**2) * self.dt - self.option.sigma * np.sqrt(self.dt))
+        jr_p = 0.5
+        
+        # Initialize asset prices at maturity
+        ST = np.array([self.option.S * (jr_u ** j) * (jr_d ** (self.n_steps - j))
+                       for j in range(self.n_steps + 1)])
+        
+        # Calculate payoffs at maturity
+        if self.option.option_type == 'call':
+            V = np.maximum(ST - self.option.K, 0)
+        else:
+            V = np.maximum(self.option.K - ST, 0)
+        
+        # Backward induction with early exercise
+        for i in range(self.n_steps - 1, -1, -1):
+            # Asset prices at time step i
+            S = np.array([self.option.S * (jr_u ** j) * (jr_d ** (i - j))
+                          for j in range(i + 1)])
+            
+            # Continuation value
+            continuation = np.exp(-self.option.r * self.dt) * \
+                          (jr_p * V[1:] + (1 - jr_p) * V[:-1])
+            
+            # Intrinsic value
+            if self.option.option_type == 'call':
+                intrinsic = np.maximum(S - self.option.K, 0)
+            else:
+                intrinsic = np.maximum(self.option.K - S, 0)
+            
+            # Take maximum (early exercise decision)
+            V = np.maximum(continuation, intrinsic)
+        
+        price = V[0]
+        elapsed_time = time.time() - start_time
+        return price, elapsed_time
+    
     def calculate_greeks(self, american: bool = False, dS: float = 0.01, dSigma: float = 0.001, dr: float = 0.0001, dT: float = 0.0001) -> Dict[str, float]:
         """
         Calculate option Greeks using finite difference approximation.
@@ -178,4 +273,3 @@ class BinomialTree:
             "theta": theta,
             "rho": rho
         }
-
