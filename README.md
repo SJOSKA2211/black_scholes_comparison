@@ -99,4 +99,25 @@ pytest tests/
 
 ## Usage
 
-**TODO:** This section will be populated with examples of how to use the implemented numerical methods, run experiments, and analyze results.
+### Running Numerical Method Implementations and Simulations
+
+Individual scripts for numerical methods are located in `src/numerical/`. You can run them directly, for example:
+
+```bash
+python src/numerical/finite_difference.py
+```
+
+For interactive development and analysis, refer to the Jupyter Notebooks in the `notebooks/` directory. To start Jupyter Lab:
+
+```bash
+jupyter lab
+```
+
+### Executing Data Collection and Analysis Scripts
+
+Data collection scripts are in `src/data/` and analysis scripts in `src/analysis/`. For example:
+
+```bash
+python src/data/market_data_collector.py
+python src/analysis/runner.py
+```
