@@ -6,6 +6,33 @@ from typing import List, Dict, Any
 
 from src.data import database
 
+def download_historical_stock_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """
+    Downloads historical stock data for a given ticker and date range.
+
+    Parameters:
+    -----------
+    ticker : str
+        The stock ticker symbol (e.g., "SPY").
+    start_date : str
+        Start date in 'YYYY-MM-DD' format.
+    end_date : str
+        End date in 'YYYY-MM-DD' format.
+
+    Returns:
+    --------
+    pd.DataFrame
+        A Pandas DataFrame containing the historical stock data.
+    """
+    try:
+        data = yf.download(ticker, start=start_date, end=end_date)
+        if data.empty:
+            print(f"No historical data found for {ticker} between {start_date} and {end_date}")
+        return data
+    except Exception as e:
+        print(f"Error downloading historical stock data for {ticker}: {e}")
+        return pd.DataFrame()
+
 def fetch_and_store_options_data(conn: sqlite3.Connection, ticker: str, expiration_dates: List[str] = None):
     """
     Fetches options data for a given ticker and stores it in the database.
@@ -76,6 +103,15 @@ def fetch_and_store_options_data(conn: sqlite3.Connection, ticker: str, expirati
 if __name__ == "__main__":
     conn = database.connect_db()
     database.create_tables(conn) # Ensure tables exist
+
+    # Example usage: Download historical stock data
+    print("\nDownloading historical stock data for AAPL...")
+    aapl_data = download_historical_stock_data("AAPL", "2023-01-01", "2023-01-31")
+    if not aapl_data.empty:
+        print("AAPL Historical Data (first 5 rows):")
+        print(aapl_data.head())
+    else:
+        print("Failed to download AAPL historical data.")
 
     # Example usage: Fetch SPY options for a few upcoming expiration dates
     # You can get available expiration dates by running: yf.Ticker("SPY").options
