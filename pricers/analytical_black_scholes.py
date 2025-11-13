@@ -7,6 +7,7 @@ from scipy.stats import norm
 from ._base_pricer import Option, BasePricer # Import BasePricer
 import time # Import time for computation_time
 from typing import Dict, Any # Import Dict, Any for type hints
+from utils.decorators import time_it, measure_memory # Import decorators
 
 class BlackScholes(BasePricer): # Inherit from BasePricer
     """Analytical Black-Scholes option pricing"""
@@ -41,23 +42,27 @@ class BlackScholes(BasePricer): # Inherit from BasePricer
                  self.option.S * norm.cdf(-d1_val))
         return price
     
+    @time_it # Apply decorator
+    @measure_memory # Apply decorator
     def price(self) -> Dict[str, Any]: # Implements abstract method
         """
         Calculates the option price and returns a dictionary of results.
         The dictionary should at least contain 'price' and 'computation_time'.
         """
-        start_time = time.time()
+        # start_time = time.time() # Removed, handled by decorator
         if self.option.option_type == 'call':
             price_val = self._call_price()
         else:
             price_val = self._put_price()
-        elapsed_time = time.time() - start_time
+        # elapsed_time = time.time() - start_time # Removed, handled by decorator
         
         return {
             "price": price_val,
-            "computation_time": elapsed_time
+            # "computation_time": elapsed_time # Removed, handled by decorator
         }
     
+    @time_it # Apply decorator
+    @measure_memory # Apply decorator
     def get_greeks(self) -> Dict[str, float]: # Implements abstract method
         """
         Calculates the option Greeks (Delta, Gamma, Vega, Theta, Rho)

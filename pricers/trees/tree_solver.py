@@ -6,6 +6,7 @@ import numpy as np
 from typing import Tuple, Dict, Any
 from .._base_pricer import Option, BasePricer # Import BasePricer
 import time
+from utils.decorators import time_it, measure_memory # Import decorators
 
 class BinomialTree(BasePricer): # Inherit from BasePricer
     """Binomial tree method for option pricing"""
@@ -149,6 +150,8 @@ class BinomialTree(BasePricer): # Inherit from BasePricer
         
         return V[0]
     
+    @time_it # Apply decorator
+    @measure_memory # Apply decorator
     def price(self, method_type: str = "european_crr") -> Dict[str, Any]:
         """
         Calculates the option price using the specified binomial tree method.
@@ -164,7 +167,7 @@ class BinomialTree(BasePricer): # Inherit from BasePricer
         Dict[str, Any]
             A dictionary containing the option price and computation time.
         """
-        start_time = time.time()
+        # Removed start_time and elapsed_time, handled by decorator
         
         if method_type == "european_crr":
             price_val = self._european_crr_price()
@@ -177,12 +180,13 @@ class BinomialTree(BasePricer): # Inherit from BasePricer
         else:
             raise ValueError(f"Unknown Binomial Tree method type: {method_type}")
         
-        elapsed_time = time.time() - start_time
         return {
             "price": price_val,
-            "computation_time": elapsed_time
+            # "computation_time": elapsed_time # Handled by decorator
         }
 
+    @time_it # Apply decorator
+    @measure_memory # Apply decorator
     def get_greeks(self, method_type: str = "european_crr", dS: float = 0.01, dSigma: float = 0.001, dr: float = 0.0001, dT: float = 0.0001) -> Dict[str, float]:
         """
         Calculate option Greeks using finite difference approximation.
