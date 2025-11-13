@@ -52,24 +52,91 @@ def create_tables(conn: sqlite3.Connection):
     """
     )
 
-    # Table for storing results from different pricing methods
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            option_id INTEGER NOT NULL,
-            method TEXT NOT NULL,
-            price REAL,
-            delta REAL,
-            gamma REAL,
-            vega REAL,
-            theta REAL,
-            rho REAL,
-            computation_time REAL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (option_id) REFERENCES options (id)
-        )
-    """
-    )
+        # Table for storing different pricing methods
+
+        cursor.execute("""
+
+            CREATE TABLE IF NOT EXISTS methods (
+
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                name TEXT NOT NULL UNIQUE,
+
+                description TEXT,
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+            )
+
+        """)
+
+    
+
+        # Table for storing experiment configurations and metadata
+
+        cursor.execute("""
+
+            CREATE TABLE IF NOT EXISTS experiments (
+
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                name TEXT NOT NULL,
+
+                description TEXT,
+
+                start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                end_time TIMESTAMP,
+
+                parameters TEXT, -- Store experiment-specific parameters as JSON string
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+            )
+
+        """)
+
+    
+
+        # Table for storing results from different pricing methods
+
+        cursor.execute("""
+
+            CREATE TABLE IF NOT EXISTS results (
+
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                option_id INTEGER NOT NULL,
+
+                method_id INTEGER NOT NULL, -- Changed to method_id
+
+                experiment_id INTEGER, -- Link to an experiment
+
+                price REAL,
+
+                delta REAL,
+
+                gamma REAL,
+
+                vega REAL,
+
+                theta REAL,
+
+                rho REAL,
+
+                computation_time REAL,
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                FOREIGN KEY (option_id) REFERENCES options (id),
+
+                FOREIGN KEY (method_id) REFERENCES methods (id),
+
+                FOREIGN KEY (experiment_id) REFERENCES experiments (id)
+
+            )
+
+        """)
 
     # Table for storing real market data (simplified for now)
     cursor.execute("""
@@ -116,6 +183,56 @@ def insert_option(conn: sqlite3.Connection, option_params: Dict[str, Any]) -> in
     conn.commit()
     return cursor.lastrowid
 
+def insert_method(conn: sqlite3.Connection, method_params: Dict[str, Any]) -> int:
+    """
+    Inserts a pricing method into the 'methods' table.
+
+    Parameters:
+    -----------
+    conn : sqlite3.Connection
+        The database connection object.
+    method_params : Dict[str, Any]
+        A dictionary containing method parameters (name, description).
+
+    Returns:
+    --------
+    int
+        The ID of the newly inserted method.
+    """
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO methods (name, description)
+        VALUES (:name, :description)
+    """,
+    method_params)
+    conn.commit()
+    return cursor.lastrowid
+
+def insert_experiment(conn: sqlite3.Connection, experiment_params: Dict[str, Any]) -> int:
+    """
+    Inserts experiment details into the 'experiments' table.
+
+    Parameters:
+    -----------
+    conn : sqlite3.Connection
+        The database connection object.
+    experiment_params : Dict[str, Any]
+        A dictionary containing experiment parameters (name, description, parameters, start_time, end_time).
+
+    Returns:
+    --------
+    int
+        The ID of the newly inserted experiment.
+    """
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO experiments (name, description, parameters, start_time, end_time)
+        VALUES (:name, :description, :parameters, :start_time, :end_time)
+    """,
+    experiment_params)
+    conn.commit()
+    return cursor.lastrowid
+
 def insert_result(conn: sqlite3.Connection, result_data: Dict[str, Any]) -> int:
     """
     Inserts pricing method results into the 'results' table.
@@ -125,7 +242,7 @@ def insert_result(conn: sqlite3.Connection, result_data: Dict[str, Any]) -> int:
     conn : sqlite3.Connection
         The database connection object.
     result_data : Dict[str, Any]
-        A dictionary containing result data (option_id, method, price, delta, gamma, vega, theta, rho, computation_time).
+        A dictionary containing result data (option_id, method_id, experiment_id, price, delta, gamma, vega, theta, rho, computation_time).
 
     Returns:
     --------
@@ -134,8 +251,8 @@ def insert_result(conn: sqlite3.Connection, result_data: Dict[str, Any]) -> int:
     """
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO results (option_id, method, price, delta, gamma, vega, theta, rho, computation_time)
-        VALUES (:option_id, :method, :price, :delta, :gamma, :vega, :theta, :rho, :computation_time)
+        INSERT INTO results (option_id, method_id, experiment_id, price, delta, gamma, vega, theta, rho, computation_time)
+        VALUES (:option_id, :method_id, :experiment_id, :price, :delta, :gamma, :vega, :theta, :rho, :computation_time)
     """,
     result_data)
     conn.commit()
@@ -168,6 +285,42 @@ def insert_market_data(conn: sqlite3.Connection, market_data_params: Dict[str, A
     market_data_params)
     conn.commit()
     return cursor.lastrowid
+
+def get_all_methods(conn: sqlite3.Connection) -> List[sqlite3.Row]:
+    """
+    Retrieves all methods from the 'methods' table.
+
+    Parameters:
+    -----------
+    conn : sqlite3.Connection
+        The database connection object.
+
+    Returns:
+    --------
+    List[sqlite3.Row]
+        A list of rows, where each row is a method.
+    """
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM methods")
+    return cursor.fetchall()
+
+def get_all_experiments(conn: sqlite3.Connection) -> List[sqlite3.Row]:
+    """
+    Retrieves all experiments from the 'experiments' table.
+
+    Parameters:
+    -----------
+    conn : sqlite3.Connection
+        The database connection object.
+
+    Returns:
+    --------
+    List[sqlite3.Row]
+        A list of rows, where each row is an experiment.
+    """
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM experiments")
+    return cursor.fetchall()
 
 def get_all_options(conn: sqlite3.Connection) -> List[sqlite3.Row]:
     """
@@ -233,6 +386,20 @@ if __name__ == "__main__":
     create_tables(conn)
     print("Database and tables created successfully.")
 
+    # Insert an example method
+    method_params = {"name": "BlackScholes", "description": "Analytical Black-Scholes formula"}
+    method_id = insert_method(conn, method_params)
+    print(f"Inserted method with ID: {method_id}")
+
+    # Insert an example experiment
+    experiment_params = {
+        "name": "Initial Validation Run",
+        "description": "First run to validate analytical solution",
+        "parameters": '{"S_range": [90, 110], "T_values": [0.5, 1.0]}' # Example JSON string
+    }
+    experiment_id = insert_experiment(conn, experiment_params)
+    print(f"Inserted experiment with ID: {experiment_id}")
+
     # Insert an example option
     option_params = {
         "S": 100.0, "K": 100.0, "T": 1.0, "r": 0.05, "sigma": 0.2,
@@ -243,7 +410,10 @@ if __name__ == "__main__":
 
     # Insert an example result for the option
     result_data = {
-        "option_id": option_id, "method": "BlackScholes", "price": 10.45,
+        "option_id": option_id,
+        "method_id": method_id,  # Use method_id
+        "experiment_id": experiment_id, # Link to experiment
+        "price": 10.45,
         "delta": 0.5, "gamma": 0.02, "vega": 0.2, "theta": -0.01, "rho": 0.1,
         "computation_time": 0.001
     }
@@ -261,6 +431,14 @@ if __name__ == "__main__":
     print(f"Inserted market data with ID: {market_data_id}")
 
     # Retrieve and print data
+    print("\nAll methods:")
+    for m in get_all_methods(conn):
+        print(dict(m))
+
+    print("\nAll experiments:")
+    for e in get_all_experiments(conn):
+        print(dict(e))
+
     print("\nAll options:")
     for opt in get_all_options(conn):
         print(dict(opt))
