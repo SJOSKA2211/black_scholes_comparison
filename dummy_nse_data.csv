@@ -1,0 +1,3 @@
+Ticker,Date,Expiry Date,Option Type,Strike Price,Open,High,Low,Close,Volume,Open Interest
+NSE_TEST,2025-11-13,2025-12-20,CE,1000,10.0,12.0,9.0,11.0,1000,5000
+NSE_TEST,2025-11-13,2025-12-20,PE,1000,5.0,6.0,4.0,5.5,800,4000

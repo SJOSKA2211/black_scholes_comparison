@@ -7,7 +7,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabel,
     QFormLayout, QLineEdit, QComboBox, QPushButton, QHBoxLayout, QCheckBox,
-    QTableWidget, QTableWidgetItem, QMessageBox, QSizePolicy
+    QTableWidget, QTableWidgetItem, QMessageBox, QSizePolicy, QFileDialog # Import QFileDialog
 )
 from PyQt5.QtCore import Qt
 
@@ -65,13 +65,14 @@ class OptionPricerGUI(QMainWindow):
         """
         Downloads market data, clears older data, and stores new data in the database.
         """
+        print("Initializing market data...")
         try:
             QMessageBox.information(self, "Market Data", "Downloading and updating market data. This may take a moment.")
             self.db_manager.clear_market_data() # Clear all existing market data
             
             # For demonstration, let's fetch SPY options for a few upcoming expiration dates
             # In a real application, you might want to configure tickers and expiration logic
-            spy_ticker = yf.Ticker("SPY") # yf is not imported yet, need to add it
+            spy_ticker = yf.Ticker("SPY") 
             all_spy_expirations = spy_ticker.options
             selected_expirations = all_spy_expirations[:3] # Fetch for the first 3 available
 
@@ -162,6 +163,11 @@ class OptionPricerGUI(QMainWindow):
         table_selection_layout.addStretch(1)
         layout.addLayout(table_selection_layout)
 
+        # Upload NSE Data Button
+        self.upload_nse_button = QPushButton("Upload NSE Data")
+        self.upload_nse_button.clicked.connect(self.upload_nse_data)
+        layout.addWidget(self.upload_nse_button)
+
         # Table Display
         self.db_data_table = QTableWidget()
         layout.addWidget(self.db_data_table)
@@ -203,6 +209,7 @@ class OptionPricerGUI(QMainWindow):
         self.analysis_dashboard_tab.setLayout(layout)
 
     def populate_experiment_ids(self):
+        print("Populating experiment IDs...")
         conn = None # Initialize conn
         try:
             conn = self.db_manager.conn # Use the existing connection
@@ -218,6 +225,7 @@ class OptionPricerGUI(QMainWindow):
             pass
 
     def run_pricing(self):
+        print("Running pricing...")
         try:
             # 1. Read input parameters
             S = float(self.spot_price_input.text())
@@ -285,6 +293,7 @@ class OptionPricerGUI(QMainWindow):
         self.results_table.setItem(row, 8, QTableWidgetItem(f"{price_result.get('memory_usage', 0):.4f}")) # Adjusted to get from result
 
     def load_table_data(self):
+        print("Loading table data...")
         selected_table = self.db_table_combo.currentText()
         
         conn = None # Initialize conn
@@ -314,6 +323,7 @@ class OptionPricerGUI(QMainWindow):
             pass
 
     def generate_convergence_plot(self):
+        print("Generating convergence plot...")
         experiment_id = self.experiment_id_combo.currentText()
         if not experiment_id:
             QMessageBox.warning(self, "Selection Error", "Please select an Experiment ID.")
@@ -357,6 +367,7 @@ class OptionPricerGUI(QMainWindow):
             pass
 
     def run_anova(self):
+        print("Running ANOVA...")
         experiment_id = self.experiment_id_combo.currentText()
         if not experiment_id:
             QMessageBox.warning(self, "Selection Error", "Please select an Experiment ID.")
@@ -411,6 +422,54 @@ class OptionPricerGUI(QMainWindow):
         finally:
             # Do not close connection here, as it's managed by self.db_manager
             pass
+
+    def upload_nse_data(self):
+        print("Upload NSE Data button clicked.")
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open NSE Data File", "", "CSV Files (*.csv);;All Files (*)")
+        if not file_path:
+            return
+
+        try:
+            df = pd.read_csv(file_path)
+            
+            # Validate and process data based on expected NSE format
+            required_columns = [
+                "Ticker", "Date", "Expiry Date", "Option Type", "Strike Price",
+                "Open", "High", "Low", "Close", "Volume", "Open Interest"
+            ]
+            if not all(col in df.columns for col in required_columns):
+                raise ValueError(f"CSV file must contain all required columns: {', '.join(required_columns)}")
+
+            # Clear existing NSE data for the tickers in the uploaded file
+            # This assumes we want to replace old data with new for the same tickers
+            unique_tickers = df['Ticker'].unique()
+            for ticker in unique_tickers:
+                self.db_manager.clear_market_data(ticker=ticker)
+
+            # Insert data into market_data table
+            for index, row in df.iterrows():
+                option_type = "call" if row["Option Type"].upper() == "CE" else "put"
+                
+                market_data_params = {
+                    "ticker": row['Ticker'],
+                    "trade_date": pd.to_datetime(row['Date']).strftime('%Y-%m-%d'),
+                    "expiration_date": pd.to_datetime(row['Expiry Date']).strftime('%Y-%m-%d'),
+                    "strike_price": row['Strike Price'],
+                    "option_type": option_type,
+                    "bid_price": row['Close'], # Using Close as a proxy for bid/ask if not available
+                    "ask_price": row['Close'], # Using Close as a proxy for bid/ask if not available
+                    "last_price": row['Close'],
+                    "implied_volatility": None, # Implied volatility might not be directly in raw data
+                    "underlying_price": None # Underlying price might not be directly in raw data
+                }
+                self.db_manager.insert_market_data(market_data_params)
+            
+            QMessageBox.information(self, "Upload Success", f"Successfully uploaded and stored {len(df)} rows of NSE data.")
+            self.load_table_data() # Refresh the experiment browser tab
+
+        except Exception as e:
+            QMessageBox.critical(self, "Upload Error", f"An error occurred during NSE data upload: {e}")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
