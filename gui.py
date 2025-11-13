@@ -171,6 +171,7 @@ class OptionPricerGUI(QMainWindow):
 
     def populate_experiment_ids(self):
         db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
+        conn = None # Initialize conn
         try:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
@@ -255,6 +256,7 @@ class OptionPricerGUI(QMainWindow):
         selected_table = self.db_table_combo.currentText()
         db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
 
+        conn = None # Initialize conn
         try:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
@@ -287,6 +289,7 @@ class OptionPricerGUI(QMainWindow):
             return
 
         db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
+        conn = None # Initialize conn
         try:
             conn = sqlite3.connect(db_path)
             # Fetch data for convergence plot: method_name, parameter_value, price
@@ -332,6 +335,7 @@ class OptionPricerGUI(QMainWindow):
             return
 
         db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
+        conn = None # Initialize conn
         try:
             conn = sqlite3.connect(db_path)
             query = f"""
