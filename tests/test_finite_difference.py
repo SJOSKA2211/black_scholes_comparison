@@ -18,7 +18,7 @@ def european_put_option():
 
 def test_explicit_finite_difference_call(european_call_option):
     fd_solver = FiniteDifference(european_call_option, M=800, N=3200)
-    result = fd_solver.explicit()
+    result = fd_solver.price(method_type="explicit")
     price = result["price"]
     # Explicit method is conditionally stable and can be unstable for certain parameters.
     # For these parameters, it is expected to produce NaN or Inf due to instability.
@@ -27,35 +27,35 @@ def test_explicit_finite_difference_call(european_call_option):
 
 def test_explicit_finite_difference_put(european_put_option):
     fd_solver = FiniteDifference(european_put_option, M=100, N=100)
-    result = fd_solver.explicit()
+    result = fd_solver.price(method_type="explicit")
     price = result["price"]
-    analytical_price = BlackScholes.price(european_put_option)["price"]
+    analytical_price = BlackScholes(european_put_option).price()["price"]
     assert abs(price - analytical_price) < 0.5
 
 def test_implicit_finite_difference_call(european_call_option):
     fd_solver = FiniteDifference(european_call_option, M=100, N=100)
-    result = fd_solver.implicit()
+    result = fd_solver.price(method_type="implicit")
     price = result["price"]
-    analytical_price = BlackScholes.price(european_call_option)["price"]
+    analytical_price = BlackScholes(european_call_option).price()["price"]
     assert abs(price - analytical_price) < 0.1
 
 def test_implicit_finite_difference_put(european_put_option):
     fd_solver = FiniteDifference(european_put_option, M=100, N=100)
-    result = fd_solver.implicit()
+    result = fd_solver.price(method_type="implicit")
     price = result["price"]
-    analytical_price = BlackScholes.price(european_put_option)["price"]
+    analytical_price = BlackScholes(european_put_option).price()["price"]
     assert abs(price - analytical_price) < 0.1
 
 def test_crank_nicolson_finite_difference_call(european_call_option):
     fd_solver = FiniteDifference(european_call_option, M=100, N=100)
-    result = fd_solver.crank_nicolson()
+    result = fd_solver.price(method_type="crank_nicolson")
     price = result["price"]
-    analytical_price = BlackScholes.price(european_call_option)["price"]
+    analytical_price = BlackScholes(european_call_option).price()["price"]
     assert abs(price - analytical_price) < 0.05
 
 def test_crank_nicolson_finite_difference_put(european_put_option):
     fd_solver = FiniteDifference(european_put_option, M=100, N=100)
-    result = fd_solver.crank_nicolson()
+    result = fd_solver.price(method_type="crank_nicolson")
     price = result["price"]
-    analytical_price = BlackScholes.price(european_put_option)["price"]
+    analytical_price = BlackScholes(european_put_option).price()["price"]
     assert abs(price - analytical_price) < 0.05

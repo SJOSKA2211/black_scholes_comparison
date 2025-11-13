@@ -26,17 +26,20 @@ def european_put_option():
 # Theta Put: -1.533
 
 def test_d1_d2(european_call_option):
-    d1 = BlackScholes.d1(european_call_option)
-    d2 = BlackScholes.d2(european_call_option)
+    bs_pricer = BlackScholes(european_call_option)
+    d1 = bs_pricer._d1()
+    d2 = bs_pricer._d2()
     assert abs(d1 - 0.35) < 1e-6
     assert abs(d2 - 0.15) < 1e-6
 
 def test_call_price(european_call_option):
-    price = BlackScholes.call_price(european_call_option)
+    bs_pricer = BlackScholes(european_call_option)
+    price = bs_pricer._call_price()
     assert abs(price - 10.450583572185526) < 1e-6
 
 def test_put_price(european_put_option):
-    price = BlackScholes.put_price(european_put_option)
+    bs_pricer = BlackScholes(european_put_option)
+    price = bs_pricer._put_price()
     assert abs(price - 5.57352602225657) < 1e-6
 
 def test_black_scholes_full_output(european_call_option, european_put_option):
@@ -52,24 +55,29 @@ def test_black_scholes_full_output(european_call_option, european_put_option):
     expected_call_rho = 53.23248154537636
     expected_put_rho = -41.89046090469503
 
-    call_results = BlackScholes.price(european_call_option)
-    put_results = BlackScholes.price(european_put_option)
+    bs_call_pricer = BlackScholes(european_call_option)
+    call_results = bs_call_pricer.price()
+    call_greeks = bs_call_pricer.get_greeks()
+
+    bs_put_pricer = BlackScholes(european_put_option)
+    put_results = bs_put_pricer.price()
+    put_greeks = bs_put_pricer.get_greeks()
 
     # Test Call Option
     assert abs(call_results["price"] - expected_call_price) < 1e-6
-    assert abs(call_results["delta"] - expected_call_delta) < 1e-6
-    assert abs(call_results["gamma"] - expected_gamma) < 1e-6
-    assert abs(call_results["vega"] - expected_vega) < 1e-6
-    assert abs(call_results["theta"] - expected_call_theta) < 2e-3
-    assert abs(call_results["rho"] - expected_call_rho) < 1e-6
+    assert abs(call_greeks["delta"] - expected_call_delta) < 1e-6
+    assert abs(call_greeks["gamma"] - expected_gamma) < 1e-6
+    assert abs(call_greeks["vega"] - expected_vega) < 1e-6
+    assert abs(call_greeks["theta"] - expected_call_theta) < 2e-3
+    assert abs(call_greeks["rho"] - expected_call_rho) < 1e-6
 
     # Test Put Option
     assert abs(put_results["price"] - expected_put_price) < 1e-6
-    assert abs(put_results["delta"] - expected_put_delta) < 1e-6
-    assert abs(put_results["gamma"] - expected_gamma) < 1e-6
-    assert abs(put_results["vega"] - expected_vega) < 1e-6
-    assert abs(put_results["theta"] - expected_put_theta) < 2e-3
-    assert abs(put_results["rho"] - expected_put_rho) < 1e-6
+    assert abs(put_greeks["delta"] - expected_put_delta) < 1e-6
+    assert abs(put_greeks["gamma"] - expected_gamma) < 1e-6
+    assert abs(put_greeks["vega"] - expected_vega) < 1e-6
+    assert abs(put_greeks["theta"] - expected_put_theta) < 2e-3
+    assert abs(put_greeks["rho"] - expected_put_rho) < 1e-6
 
 def test_option_validation():
     with pytest.raises(ValueError, match="Stock price must be positive"):
