@@ -18,7 +18,15 @@ from pricers.fdm.fdm_solver import FiniteDifference
 from pricers.mc.mc_solver import MonteCarlo
 from pricers.trees.tree_solver import BinomialTree
 
+# Import DBManager and market data loader
+from database.db_manager import DBManager
+from data_handling.market_data_loader import fetch_and_store_options_data
+import yfinance as yf # Import yfinance
+
 class OptionPricerGUI(QMainWindow):
+    # SQLiteCloud connection string
+    SQLITECLOUD_URL = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Computational Finance Dashboard")
@@ -31,6 +39,12 @@ class OptionPricerGUI(QMainWindow):
 
         self.tabs = QTabWidget()
         self.layout.addWidget(self.tabs)
+
+        # Initialize DBManager
+        self.db_manager = DBManager(self.SQLITECLOUD_URL)
+        
+        # Initialize market data on startup
+        self._initialize_market_data()
 
         # Tab 1: Single Pricer
         self.single_pricer_tab = QWidget()
@@ -46,6 +60,25 @@ class OptionPricerGUI(QMainWindow):
         self.analysis_dashboard_tab = QWidget()
         self.tabs.addTab(self.analysis_dashboard_tab, "Analysis Dashboard")
         self.setup_analysis_dashboard_tab()
+
+    def _initialize_market_data(self):
+        """
+        Downloads market data, clears older data, and stores new data in the database.
+        """
+        try:
+            QMessageBox.information(self, "Market Data", "Downloading and updating market data. This may take a moment.")
+            self.db_manager.clear_market_data() # Clear all existing market data
+            
+            # For demonstration, let's fetch SPY options for a few upcoming expiration dates
+            # In a real application, you might want to configure tickers and expiration logic
+            spy_ticker = yf.Ticker("SPY") # yf is not imported yet, need to add it
+            all_spy_expirations = spy_ticker.options
+            selected_expirations = all_spy_expirations[:3] # Fetch for the first 3 available
+
+            fetch_and_store_options_data(self.db_manager, "SPY", expiration_dates=selected_expirations)
+            QMessageBox.information(self, "Market Data", "Market data updated successfully.")
+        except Exception as e:
+            QMessageBox.critical(self, "Market Data Error", f"Failed to update market data: {e}")
 
     def setup_single_pricer_tab(self):
         main_layout = QVBoxLayout()
@@ -170,20 +203,19 @@ class OptionPricerGUI(QMainWindow):
         self.analysis_dashboard_tab.setLayout(layout)
 
     def populate_experiment_ids(self):
-        db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
         conn = None # Initialize conn
         try:
-            conn = sqlite3.connect(db_path)
+            conn = self.db_manager.conn # Use the existing connection
             cursor = conn.cursor()
             cursor.execute("SELECT DISTINCT experiment_id FROM Method_Results")
             experiment_ids = [str(row[0]) for row in cursor.fetchall()]
             self.experiment_id_combo.clear() # Clear existing items
             self.experiment_id_combo.addItems(experiment_ids)
-        except sqlite3.Error as e:
+        except Exception as e: # Catch general exception as sqlitecloud might not raise sqlite3.Error
             QMessageBox.critical(self, "Database Error", f"Could not load experiment IDs: {e}")
         finally:
-            if conn:
-                conn.close()
+            # Do not close connection here, as it's managed by self.db_manager
+            pass
 
     def run_pricing(self):
         try:
@@ -254,11 +286,10 @@ class OptionPricerGUI(QMainWindow):
 
     def load_table_data(self):
         selected_table = self.db_table_combo.currentText()
-        db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
-
+        
         conn = None # Initialize conn
         try:
-            conn = sqlite3.connect(db_path)
+            conn = self.db_manager.conn # Use the existing connection
             cursor = conn.cursor()
             cursor.execute(f"SELECT * FROM {selected_table}")
             
@@ -276,11 +307,11 @@ class OptionPricerGUI(QMainWindow):
             
             self.db_data_table.horizontalHeader().setStretchLastSection(True)
 
-        except sqlite3.Error as e:
+        except Exception as e: # Catch general exception as sqlitecloud might not raise sqlite3.Error
             QMessageBox.critical(self, "Database Error", f"Could not load data from {selected_table}: {e}")
         finally:
-            if conn:
-                conn.close()
+            # Do not close connection here, as it's managed by self.db_manager
+            pass
 
     def generate_convergence_plot(self):
         experiment_id = self.experiment_id_combo.currentText()
@@ -288,10 +319,9 @@ class OptionPricerGUI(QMainWindow):
             QMessageBox.warning(self, "Selection Error", "Please select an Experiment ID.")
             return
 
-        db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
         conn = None # Initialize conn
         try:
-            conn = sqlite3.connect(db_path)
+            conn = self.db_manager.conn # Use the existing connection
             # Fetch data for convergence plot: method_name, parameter_value, price
             # Assuming 'parameter_value' represents the changing parameter (e.g., N steps/paths)
             query = f"""
@@ -320,13 +350,11 @@ class OptionPricerGUI(QMainWindow):
             self.figure.tight_layout()
             self.canvas.draw()
 
-        except sqlite3.Error as e:
+        except Exception as e: # Catch general exception as sqlitecloud might not raise sqlite3.Error
             QMessageBox.critical(self, "Database Error", f"Could not retrieve data for convergence plot: {e}")
-        except Exception as e:
-            QMessageBox.critical(self, "Plotting Error", f"An error occurred while generating the plot: {e}")
         finally:
-            if conn:
-                conn.close()
+            # Do not close connection here, as it's managed by self.db_manager
+            pass
 
     def run_anova(self):
         experiment_id = self.experiment_id_combo.currentText()
@@ -334,10 +362,9 @@ class OptionPricerGUI(QMainWindow):
             QMessageBox.warning(self, "Selection Error", "Please select an Experiment ID.")
             return
 
-        db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
         conn = None # Initialize conn
         try:
-            conn = sqlite3.connect(db_path)
+            conn = self.db_manager.conn # Use the existing connection
             query = f"""
                 SELECT method_name, price
                 FROM Method_Results
@@ -379,13 +406,11 @@ class OptionPricerGUI(QMainWindow):
             
             QMessageBox.information(self, "ANOVA Results", result_msg)
 
-        except sqlite3.Error as e:
+        except Exception as e: # Catch general exception as sqlitecloud might not raise sqlite3.Error
             QMessageBox.critical(self, "Database Error", f"Could not retrieve data for ANOVA: {e}")
-        except Exception as e:
-            QMessageBox.critical(self, "ANOVA Error", f"An error occurred while running ANOVA: {e}")
         finally:
-            if conn:
-                conn.close()
+            # Do not close connection here, as it's managed by self.db_manager
+            pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

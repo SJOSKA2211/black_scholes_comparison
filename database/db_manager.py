@@ -148,6 +148,19 @@ class DBManager:
         self.conn.commit()
         return cursor.lastrowid
 
+    def clear_market_data(self, ticker: str = None):
+        """
+        Clears market data from the 'market_data' table.
+        If ticker is provided, clears data only for that ticker.
+        Otherwise, clears all market data.
+        """
+        cursor = self.conn.cursor()
+        if ticker:
+            cursor.execute("DELETE FROM market_data WHERE ticker = ?", (ticker,))
+        else:
+            cursor.execute("DELETE FROM market_data")
+        self.conn.commit()
+
     def get_all_methods(self) -> List[sqlite3.Row]:
         """Retrieves all methods from the 'methods' table."""
         cursor = self.conn.cursor()
