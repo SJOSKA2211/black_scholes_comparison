@@ -170,7 +170,7 @@ class OptionPricerGUI(QMainWindow):
         self.analysis_dashboard_tab.setLayout(layout)
 
     def populate_experiment_ids(self):
-        db_path = "option_pricing_data.db"
+        db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
         try:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
@@ -253,7 +253,7 @@ class OptionPricerGUI(QMainWindow):
 
     def load_table_data(self):
         selected_table = self.db_table_combo.currentText()
-        db_path = "option_pricing_data.db" # Assuming the DB is in the root of option_pricer_project
+        db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
 
         try:
             conn = sqlite3.connect(db_path)
@@ -286,7 +286,7 @@ class OptionPricerGUI(QMainWindow):
             QMessageBox.warning(self, "Selection Error", "Please select an Experiment ID.")
             return
 
-        db_path = "option_pricing_data.db"
+        db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
         try:
             conn = sqlite3.connect(db_path)
             # Fetch data for convergence plot: method_name, parameter_value, price
@@ -331,7 +331,7 @@ class OptionPricerGUI(QMainWindow):
             QMessageBox.warning(self, "Selection Error", "Please select an Experiment ID.")
             return
 
-        db_path = "option_pricing_data.db"
+        db_path = "sqlitecloud://cjaqjtrzvz.g6.sqlite.cloud:8860/auth.sqlitecloud?apikey=zb9TggTaH3Q0OWC2orU4GsKoCRY7YAqcuYWajfzpRz4"
         try:
             conn = sqlite3.connect(db_path)
             query = f"""

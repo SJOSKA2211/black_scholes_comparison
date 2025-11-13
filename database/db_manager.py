@@ -4,6 +4,7 @@ Manages SQLite database connections and operations for storing option parameters
 method results, and market data. Implemented as a singleton.
 """
 import sqlite3
+import sqlitecloud # Import sqlitecloud
 from typing import List, Tuple, Dict, Any
 import os
 
@@ -28,11 +29,23 @@ class DBManager:
         self._initialized = True
 
     def _connect(self):
-        """Establishes a connection to the SQLite database."""
+        """Establishes a connection to the SQLite database (local or SQLiteCloud)."""
         if self.conn is not None:
             self.conn.close()
-        self.conn = sqlite3.connect(self.db_name)
-        self.conn.row_factory = sqlite3.Row # Allows accessing columns by name
+        
+        if self.db_name.startswith("sqlitecloud://"):
+            # Connect to SQLiteCloud
+            try:
+                self.conn = sqlitecloud.connect(self.db_name)
+                # SQLiteCloud client might not have row_factory directly,
+                # or it might behave differently. We'll assume it's compatible for now.
+                # If issues arise, we might need to fetch data differently or wrap cursor.
+            except Exception as e:
+                raise ConnectionError(f"Failed to connect to SQLiteCloud: {e}")
+        else:
+            # Connect to local SQLite file
+            self.conn = sqlite3.connect(self.db_name)
+            self.conn.row_factory = sqlite3.Row # Allows accessing columns by name
 
     def _create_tables_from_schema(self):
         """Creates tables in the database by executing the schema.sql script."""
@@ -43,7 +56,14 @@ class DBManager:
             schema_sql = f.read()
         
         cursor = self.conn.cursor()
-        cursor.executescript(schema_sql)
+        # SQLiteCloud might not support executescript directly, or might require different handling
+        # For now, we'll try executescript. If it fails, we might need to parse and execute statements individually.
+        try:
+            cursor.executescript(schema_sql)
+        except AttributeError: # Fallback for sqlitecloud if executescript is not available
+            for statement in schema_sql.split(';'):
+                if statement.strip():
+                    cursor.execute(statement)
         self.conn.commit()
 
     def close_connection(self):
@@ -67,9 +87,18 @@ class DBManager:
 
     def insert_method(self, method_params: Dict[str, Any]) -> int:
         """
-        Inserts a pricing method into the 'methods' table.
+        Inserts a pricing method into the 'methods' table if it doesn't exist,
+        otherwise returns the existing method_id.
         """
         cursor = self.conn.cursor()
+        
+        # Check if method already exists
+        cursor.execute("SELECT id FROM methods WHERE name = :name", {"name": method_params["name"]})
+        existing_method = cursor.fetchone()
+        if existing_method:
+            return existing_method[0] # Return existing ID
+        
+        # If not, insert new method
         cursor.execute("""
             INSERT INTO methods (name, description)
             VALUES (:name, :description)
