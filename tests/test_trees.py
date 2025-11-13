@@ -2,9 +2,9 @@
 Test cases for Binomial and Trinomial Tree Methods
 """
 import pytest
-from src.options.base import Option
-from src.numerical.trees import BinomialTree
-from src.analytical.black_scholes import BlackScholes
+from pricers._base_pricer import Option
+from pricers.trees.tree_solver import BinomialTree
+from pricers.analytical_black_scholes import BlackScholes
 
 # Test data for European Call and Put options
 @pytest.fixture

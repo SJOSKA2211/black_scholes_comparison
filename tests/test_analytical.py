@@ -2,8 +2,8 @@
 Test cases for Analytical Black-Scholes Formulas
 """
 import pytest
-from src.options.base import Option
-from src.analytical.black_scholes import BlackScholes
+from pricers._base_pricer import Option
+from pricers.analytical_black_scholes import BlackScholes
 
 # Test data for European Call and Put options
 @pytest.fixture

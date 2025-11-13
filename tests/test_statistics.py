@@ -4,7 +4,7 @@ Test cases for Statistical Testing Framework
 import pytest
 import numpy as np
 from scipy import stats
-from src.analysis.statistics import (
+from analysis.statistical_tests import (
     calculate_confidence_interval,
     paired_t_test,
     wilcoxon_signed_rank_test,

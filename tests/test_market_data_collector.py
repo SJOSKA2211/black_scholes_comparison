@@ -6,17 +6,16 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 import yfinance as yf # Added import
-from src.data.market_data_collector import download_historical_stock_data, fetch_and_store_options_data
-from src.data.database import connect_db, create_tables
+from data_handling.market_data_loader import download_historical_stock_data, fetch_and_store_options_data
+from database.db_manager import DBManager
 
 # Fixture for a temporary SQLite database
 @pytest.fixture
 def temp_db():
     db_name = "test_option_pricing_data.db"
-    conn = connect_db(db_name)
-    create_tables(conn)
-    yield conn
-    conn.close()
+    db_manager = DBManager(db_name) # Instantiate DBManager
+    yield db_manager
+    db_manager.close_connection()
     os.remove(db_name)
 
 def test_download_historical_stock_data_valid_ticker():
@@ -47,7 +46,7 @@ def test_download_historical_stock_data_invalid_ticker():
 # For a more robust test, one would typically mock the yfinance API calls.
 # For now, we'll do a basic test that it runs without immediate errors.
 def test_fetch_and_store_options_data_basic(temp_db):
-    conn = temp_db
+    db_manager = temp_db
     ticker = "SPY"
     # Fetch for a very near expiration date to limit data volume
     today = datetime.now()
@@ -63,9 +62,9 @@ def test_fetch_and_store_options_data_basic(temp_db):
             break
     
     if selected_exp_date:
-        fetch_and_store_options_data(conn, ticker, expiration_dates=[selected_exp_date])
+        fetch_and_store_options_data(db_manager, ticker, expiration_dates=[selected_exp_date])
         # Verify some data was inserted
-        cursor = conn.cursor()
+        cursor = db_manager.conn.cursor() # Access the connection via db_manager.conn
         cursor.execute("SELECT COUNT(*) FROM market_data WHERE ticker = ?", (ticker,))
         count = cursor.fetchone()[0]
         assert count > 0

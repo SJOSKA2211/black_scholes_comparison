@@ -4,7 +4,7 @@ Test cases for Visualization Module
 import pytest
 import numpy as np
 import os
-from src.analysis.visualization import (
+from visualization.plot_generator import (
     plot_convergence,
     plot_error_chart,
     plot_comparison

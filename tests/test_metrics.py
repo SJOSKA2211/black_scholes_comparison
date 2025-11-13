@@ -3,7 +3,7 @@ Test cases for Performance Metrics Module
 """
 import pytest
 import numpy as np
-from src.analysis.metrics import (
+from analysis.performance_metrics import (
     absolute_error,
     relative_error,
     mean_absolute_percentage_error,
