@@ -103,9 +103,79 @@ class BinomialTree:
             # Take maximum (early exercise decision)
             V = np.maximum(continuation, intrinsic)
         
-        price = V[0]
-        elapsed_time = time.time() - start_time
-        return price, elapsed_time
+    def calculate_greeks(self, american: bool = False, dS: float = 0.01, dSigma: float = 0.001, dr: float = 0.0001, dT: float = 0.0001) -> Dict[str, float]:
+        """
+        Calculate option Greeks using finite difference approximation.
+        
+        Parameters:
+        -----------
+        american : bool
+            Whether to calculate Greeks for an American option.
+        dS : float
+            Small perturbation for stock price (for Delta, Gamma).
+        dSigma : float
+            Small perturbation for volatility (for Vega).
+        dr : float
+            Small perturbation for risk-free rate (for Rho).
+        dT : float
+            Small perturbation for time to maturity (for Theta).
+            
+        Returns:
+        --------
+        Dict[str, float]
+            A dictionary containing the calculated Greeks.
+        """
+        original_option = self.option
+        
+        # Helper to get price for a given option object
+        def get_price(opt: Option):
+            # Re-initialize BinomialTree with the new option parameters
+            temp_bt = BinomialTree(opt, self.n_steps)
+            if american:
+                return temp_bt.american()[0]
+            else:
+                return temp_bt.european()[0]
 
+        # Original price
+        original_price = get_price(original_option)
 
+        # Delta
+        option_plus_dS = Option(S=original_option.S + dS, **{k: v for k, v in original_option.__dict__.items() if k != 'S'})
+        option_minus_dS = Option(S=original_option.S - dS, **{k: v for k, v in original_option.__dict__.items() if k != 'S'})
+        price_plus_dS = get_price(option_plus_dS)
+        price_minus_dS = get_price(option_minus_dS)
+        delta = (price_plus_dS - price_minus_dS) / (2 * dS)
+
+        # Gamma
+        price_original_S = original_price # Already calculated
+        gamma = (price_plus_dS - 2 * price_original_S + price_minus_dS) / (dS ** 2)
+
+        # Vega
+        option_plus_dSigma = Option(sigma=original_option.sigma + dSigma, **{k: v for k, v in original_option.__dict__.items() if k != 'sigma'})
+        option_minus_dSigma = Option(sigma=original_option.sigma - dSigma, **{k: v for k, v in original_option.__dict__.items() if k != 'sigma'})
+        price_plus_dSigma = get_price(option_plus_dSigma)
+        price_minus_dSigma = get_price(option_minus_dSigma)
+        vega = (price_plus_dSigma - price_minus_dSigma) / (2 * dSigma)
+
+        # Theta (perturb T, but ensure T remains positive)
+        option_plus_dT = Option(T=original_option.T + dT, **{k: v for k, v in original_option.__dict__.items() if k != 'T'})
+        option_minus_dT = Option(T=max(1e-6, original_option.T - dT), **{k: v for k, v in original_option.__dict__.items() if k != 'T'}) # Ensure T > 0
+        price_plus_dT = get_price(option_plus_dT)
+        price_minus_dT = get_price(option_minus_dT)
+        theta = -(price_plus_dT - price_minus_dT) / (2 * dT) # Theta is usually negative
+
+        # Rho
+        option_plus_dr = Option(r=original_option.r + dr, **{k: v for k, v in original_option.__dict__.items() if k != 'r'})
+        option_minus_dr = Option(r=original_option.r - dr, **{k: v for k, v in original_option.__dict__.items() if k != 'r'})
+        price_plus_dr = get_price(option_plus_dr)
+        price_minus_dr = get_price(option_minus_dr)
+        rho = (price_plus_dr - price_minus_dr) / (2 * dr)
+        
+        return {
+            "delta": delta,
+            "gamma": gamma,
+            "vega": vega,
+            "theta": theta,
+            "rho": rho
+        }
 
